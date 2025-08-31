@@ -1,0 +1,93 @@
+import sqlite3
+
+# running_log.db 라는 이름의 데이터베이스에 연결합니다.
+# 만약 파일이 존재하지 않으면, 이 명령을 실행하는 순간 새로 생성됩니다.
+conn = sqlite3.connect('running_log.db') #이것은 데이터베이스(도시)로 가는 통로를 구축하는것
+
+# SQL 명령을 내릴 수 있는 '지휘관(cursor)'을 임명합니다.
+cur = conn.cursor()
+print("데이터베이스가 성공적으로 준비되었습니다.")
+
+# 'running_log' 라는 이름의 테이블을 생성하는 SQL 쿼리
+# IF NOT EXISTS 는 '만약 같은 이름의 테이블이 없으면' 이라는 안전장치입니다.
+
+create_table_sql = """
+CREATE TABLE IF NOT EXISTS running_log (
+date TEXT
+distance_km REAL,
+time_minutes INTEGER,
+feeling_score INTEGER
+);
+"""
+
+건축 설계도의 의미:
+
+CREATE TABLE running_log (...): running_log라는 이름의 테이블을 만듭니다.
+
+date TEXT: 'date'라는 열(column)을 만들고, 여기에는 오직 'TEXT'(글자) 형태의 데이터만 허용합니다.
+
+distance_km REAL: 'distance_km'라는 열을 만들고, 여기에는 오직 'REAL'(소수점이 있는 숫자) 형태의 데이터만 허용합니다.
+
+time_minutes INTEGER: 'time_minutes'라는 열을 만들고, 여기에는 오직 'INTEGER'(정수) 형태의 데이터만 허용합니다.
+
+feeling_score INTEGER: 'feeling_score'라는 열을 만들고, 여기에도 오직 'INTEGER'(정수) 형태의 데이터만 허용합니다.
+
+
+# 지휘관 (cur)에게 SQL 쿼리 실행을 명령합니다.
+cur.execute(create_table_sql)
+
+# 변경사항을 데이터베이스 파일에 최정 저장합니다.
+conn.commit()
+
+print("테이블 'running_log'가 성공적으로 생성되었습니다.")
+
+import pandas as pd
+
+# 1. CSV 파일 (단독주택)에서 데이터를 읽어옵니다.
+df = pd.read_csv('running_log.csv')
+
+# 2. Pandas의 to_sql 기능을 이용해 'df'에 담김 모든 데이터를
+# 'running_log' 테이블로 이주시킵니다.
+# conn은 데이터베이스 연결 통로입니다.
+# if_exists='replace'는 만약 테이블에 기존 데이터가 있으면 덮어쓰라는 옵션입니다.
+df.to_sql('running_log', conn, if_exists='replace', index=False)
+
+print("데이터가 'running_log' 테이블로 성공적으로 이주했습니다.")
+
+
+이 이주 계획의 의미:
+
+df = pd.read_csv('running_log.csv'): "이삿짐센터(Pandas), running_log.csv 집에 있는 모든 짐(데이터)을 싸서 df라는 이삿짐 트럭에 실어줘."
+
+df.to_sql(...): "df 트럭에 실린 짐을, running_log라는 이름의 테이블(아파트)로 옮겨줘."
+
+conn: "이주할 아파트는 conn 통로로 연결된 그 데이터베이스 도시가 맞아."
+
+if_exists='replace': "만약 그 아파트에 이미 누가 살고 있으면, 그냥 전부 내보내고 우리 짐으로 새로 채워줘." (나중에 데이터를 업데이트할 때 유용한 옵션입니다.)
+
+index=False: "판다스가 자동으로 붙이는 순서 번호(인덱스)는 필요 없으니, 짐만 옮겨줘."
+
+
+
+#'running_log' 테이블에서 모든(*) 데이터를 선택하여 조회하는 SQL 쿼리
+query = "SELECT * FROM running_log"
+
+# Pandas를 이용해 SQL 쿼리 결과를 바로 DataFrame으로 읽어옵니다.
+df_from_db = pd.read_sql_query(query, conn)
+
+# 데이터베이스에서 직접 가져온 결과를 출력합니다.
+print("--- 데이터베이스에서 직접 조회한 결과 ---")
+display(df_from_db)
+
+
+이 조회 명령의 의미:
+
+query = "SELECT * FROM running_log": 이것이 바로 순수한 SQL입니다.
+
+SELECT *: "모든 열(column)을 선택하라." (*는 '모든 것'을 의미하는 와일드카드입니다.)
+
+FROM running_log: "어디서? running_log 테이블에서."
+
+df_from_db = pd.read_sql_query(query, conn): "판다스, conn 통로를 통해 데이터베이스에 접속해서, query의 내용대로 질문하고, 그 답변을 df_from_db 라는 새로운 데이터프레임에 담아줘."
+
+display(df_from_db): 주피터 노트북에서 표를 가장 예쁘게 보여주는 출력 명령어입니다.
